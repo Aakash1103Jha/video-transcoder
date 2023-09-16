@@ -12,10 +12,18 @@ A simple node-express API that lets you transcode videos and generate correspond
 ## 👨🏻‍💻 Getting Stated
 
 - run `npm i` to install all project dependencies.
-- add video(s) in `'./src/videos/raw` folder. For ease, there is already a video and its transcoded files added in `./src/videos` folder. All you need to do is open the `./index.html` file.
 - run `npm run dev` to start the dev server.
+- **v1.0.0**: ~~add video(s) in `'./src/videos/raw` folder. For ease, there is already a video and its transcoded files added in `./src/videos` folder. All you need to do is open the `./index.html` file.~~
 
 ## 📦 Begin Transcoding
+
+### Version 2.0.0
+
+- Once you have the project running on localhost, upload a new video file using the `POST /transcode/new` endpoint.
+- Once the video gets uploaded, transcoding starts immediately and just like in v1.0.0, generated output is stored in the `./src/videos/transcoded` folder.
+- Once transcoding is completed, the uploaded file is removed from the local `fs`.
+
+### Version 1.0.0
 
 - copy the complete video name, including the file extension, of the file that you want to transcode, say `my-video.mp4`.
 - for `v1.0.0`, you can either use your browser or terminal to send a `GET` request to `htp://localhost:4000/transcode/new/my-video.mp4`

@@ -2,8 +2,10 @@ import { NextFunction, Request, Response } from "express";
 import ffmpeg from "fluent-ffmpeg";
 import ffmpegInstaller from "@ffmpeg-installer/ffmpeg";
 import ffProbeInstaller from "@ffprobe-installer/ffprobe";
-import { resolve } from "path";
-import { existsSync, mkdirSync } from "fs";
+import { path } from "@ffmpeg-installer/ffmpeg";
+import { resolve, extname } from "path";
+import { existsSync, mkdirSync, unlink } from "fs";
+import HttpError from "../utils/HttpError";
 
 export default async function transcodeVideo(
   req: Request,
@@ -11,7 +13,15 @@ export default async function transcodeVideo(
   next: NextFunction
 ) {
   try {
-    const inputFileName = req.params.name;
+    if (!req.file)
+      return next(new HttpError("Upload a file to begin transcoding", 400));
+    // const inputFileName = req.params.name;
+
+    const outputDirName = req.file.originalname.split(
+      extname(req.file.originalname)
+    )[0];
+
+    const inputFileName = req.file.originalname;
     const inputFilePath = resolve(__dirname, `../videos/raw/${inputFileName}`);
     const filename = inputFileName.split(".")[0];
     /**
@@ -23,8 +33,11 @@ export default async function transcodeVideo(
      *      |- .hls file
      *      |- .ts files
      */
-    const outputDir = resolve(__dirname, `../videos/transcoded/${filename}`);
-    const manifestPath = `${outputDir}/${filename}.m3u8`;
+    const outputDir = resolve(
+      __dirname,
+      `../videos/transcoded/${outputDirName}`
+    );
+    const manifestPath = `${outputDir}/${outputDirName}.m3u8`;
 
     if (!existsSync(outputDir)) {
       mkdirSync(outputDir, { recursive: true });
@@ -36,20 +49,20 @@ export default async function transcodeVideo(
       .outputOptions([
         "-hls_time 15", // Set segment duration (in seconds)
         "-hls_list_size 0", // Allow an unlimited number of segments in the playlist
-        "-c:v h264",
-        "-c:a aac",
-      ]);
+      ])
+      .output(`${outputDir}/${outputDirName}.m3u8`);
 
-    command.on("start", () => {
-      console.info("Starting transcoding file: ", inputFileName);
-    });
-    command.on("error", (err) => {
-      console.error("Error:", err);
-      throw err;
-    });
+    command.outputOptions("-c:v h264");
+    command.outputOptions("-c:a aac");
+
     command.on("end", () => {
-      console.log("Transcoding completed.");
-      return res
+      unlink(inputFilePath, (err) => {
+        if (err) throw new HttpError((err as Error).message, 500);
+        console.info(
+          `Transcoding completed. Raw file removed from ${inputFilePath}`
+        );
+      });
+      res
         .status(200)
         .json({ message: "Transcoding completed", manifest: manifestPath });
     });
