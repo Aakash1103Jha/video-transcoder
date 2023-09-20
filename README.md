@@ -2,6 +2,8 @@
 
 A simple node-express API that lets you transcode videos and generate corresponding`.hls` and `.ts` files.
 
+### [Medium Article](https://medium.com/javascript-in-plain-english/building-a-simple-video-transcoding-service-with-node-and-ffmpeg-271b2e73d5e0)
+
 ### Future updates will allow users to
 
 - `upload` videos to the server
